@@ -1,0 +1,12 @@
+python-dotenv
+pandas
+numpy
+setuptools
+scikit-learn
+dill
+flask
+streamlit
+fastapi
+dotenv
+langchain_google_genai
+-e .
