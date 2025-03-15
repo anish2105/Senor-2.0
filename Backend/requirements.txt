@@ -9,4 +9,5 @@ streamlit
 fastapi
 dotenv
 langchain_google_genai
+pydantic
 -e .
