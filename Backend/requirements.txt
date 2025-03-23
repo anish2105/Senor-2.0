@@ -10,4 +10,11 @@ fastapi
 dotenv
 langchain_google_genai
 pydantic
+pinecone[grpc]
+google-generativeai
+vertexai
+langchain-pinecone
+langchain
+fastapi 
+uvicorn 
 -e .
