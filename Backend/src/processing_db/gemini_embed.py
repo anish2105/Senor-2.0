@@ -2,8 +2,9 @@ import os
 from dotenv import load_dotenv
 import google.generativeai as genai
 from langchain_core.embeddings import Embeddings
-from exception import CustomException
-from logger import logger
+from src.exception import CustomException
+from src.logger import logger
+import asyncio
 
 load_dotenv()
 
@@ -36,7 +37,11 @@ class GeminiEmbeddings(Embeddings):
             task_type="RETRIEVAL_QUERY"
         )
         return embedding_result['embedding']
+    
+    # Generate embedding for a query asynchronously
+    async def aget_text_embedding(self, text):
+        return await asyncio.to_thread(self.embed_query, text)
 
 # Initialize
-embeddings = GeminiEmbeddings()
+gemini_embeddings = GeminiEmbeddings()
 logger.info("Embeddings has been initialized")

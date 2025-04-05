@@ -1,10 +1,9 @@
 import sqlite3
 import sys
-from exception import CustomException
-from logger import logger
+from src.exception import CustomException
+from src.logger import logger
 
 class DatabaseManager:
-    """Class to manage database operations"""
     
     def __init__(self, db_path):
         """Initialize with database path"""

@@ -1,27 +1,59 @@
-from Model_initialization import LegalChatbot
-from exception import CustomException
-from logger import logger
+import os
 import sys
-from prompts import basic_prompt
+import uvicorn
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from src.processing_db.vectordb_setup import initialize_pinecone, search_documents
+from src.exception import CustomException
+from src.logger import logger
 
-def load_prompts():
+app = FastAPI(title="Pinecone RAG API", version="1.0")
+
+try:
+    pinecone_client = initialize_pinecone()
+    logger.info("Pinecone initialized successfully.")
+except Exception as e:
+    logger.error(f"Failed to initialize Pinecone: {str(e)}")
+    sys.exit(1)
+
+
+# Request Model
+class SearchRequest(BaseModel):
+    query: str
+    top_k: int = 5
+
+
+@app.post("/search")
+async def search_similar_documents(request: SearchRequest):
+    """
+        list: Top-k matched documents with metadata.
+    """
     try:
-        
-        system_prompt, user_prompt = basic_prompt()
-        return system_prompt, user_prompt
-    except Exception as e:
-        logger.error(f"Error loading prompts: {str(e)}")
-        raise CustomException(e, sys)
+        results = search_documents(request.query, initial_k=request.top_k)
+        logger.info(f"🔍 Retrieved {len(results)} documents for query: '{request.query}'")
+
+        if not results:
+            return {"message": "No relevant documents found"}
+
+        return [
+            {
+                "rank": i + 1,
+                "content": doc.page_content.strip(),  
+                "metadata": doc.metadata,
+            }
+            for i, doc in enumerate(results)
+        ]
+
+    except CustomException as e:
+        logger.error(f"Error during search: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error during document search")
+
+
+@app.get("/")
+async def health_check():
+    return {"status": "ok", "message": "Pinecone RAG API is running 🚀"}
+
 
 if __name__ == "__main__":
-    try:
-        chatbot = LegalChatbot()
-        system_prompt, user_prompt = load_prompts()
-        
-        response = chatbot.generate_response(system_prompt, user_prompt)
-        print("\nLegal Chatbot Response:\n", response)
-        logger.info("Response generated successfully.")
+    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
 
-    except CustomException as ce:
-        logger.error(f"Application Error: {str(ce)}")
-        print(f"An error occurred: {str(ce)}")

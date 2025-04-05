@@ -2,8 +2,8 @@ import os
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 from pydantic import BaseModel, Field
-from exception import CustomException
-from logger import logger
+from src.exception import CustomException
+from src.logger import logger
 import sys
 
 class ChatbotConfig(BaseModel):

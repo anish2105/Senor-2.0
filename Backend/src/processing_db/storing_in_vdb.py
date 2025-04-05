@@ -1,19 +1,12 @@
 import sys
 from langchain.schema import Document
-from vectordb_setup import initialize_pinecone, create_vector_store, search_documents
-from exception import CustomException
-from logger import logger 
-from db_reader import db_manager
+from src.processing_db.vectordb_setup import initialize_pinecone, create_vector_store, search_documents
+from src.exception import CustomException
+from src.logger import logger 
+from src.processing_db.db_reader import db_manager
 
 def extract_documents_from_table(table_name, limit=100):
     """
-    Extract documents from a database table where columns with 'desc' in the name become
-    the page_content and all other columns become metadata.
-    
-    Args:
-        table_name (str): Name of the table to extract data from
-        limit (int): Maximum number of rows to extract
-        
     Returns:
         list: List of Document objects with page_content and metadata
     """
@@ -62,12 +55,6 @@ def extract_documents_from_table(table_name, limit=100):
 
 def process_all_tables(tables=None, limit_per_table=100):
     """
-    Process all tables or specified tables and create documents.
-    
-    Args:
-        tables (list, optional): List of table names to process. If None, process all tables.
-        limit_per_table (int): Maximum number of rows to extract per table
-        
     Returns:
         list: Combined list of Document objects from all processed tables
     """
@@ -92,12 +79,6 @@ def upsert_data(docs=None, metadata_list=None, tables=None, limit_per_table=100)
     Upsert documents to the vector database.
     If docs is provided, use those directly.
     If docs is None, extract documents from the database tables.
-    
-    Args:
-        docs (list, optional): List of text documents
-        metadata_list (list, optional): List of metadata dicts for each document
-        tables (list, optional): List of table names to process if docs is None
-        limit_per_table (int): Maximum number of rows to extract per table
     """
     try:
         documents = []
@@ -138,12 +119,6 @@ def upsert_data(docs=None, metadata_list=None, tables=None, limit_per_table=100)
 
 def search_similar_documents(query):
     """
-    Search for documents similar to the query.
-    
-    Args:
-        query (str): The search query
-        top_k (int): Number of results to return
-    
     Returns:
         list: Top k similar documents
     """
@@ -156,7 +131,7 @@ def search_similar_documents(query):
         raise CustomException(e, sys)
 
 def display_results(results):
-    """Display search results in a formatted way."""
+    """Display search results"""
     print(f"Found {len(results)} relevant documents:")
     for i, doc in enumerate(results):
         print(f"  {i+1}. {doc.page_content}")

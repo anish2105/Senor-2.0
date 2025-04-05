@@ -2,17 +2,12 @@ import os
 import sys
 import json
 from langchain.schema import Document
-from vectordb_setup import initialize_pinecone, create_vector_store, search_documents
-from exception import CustomException
-from logger import logger 
+from src.processing_db.vectordb_setup import initialize_pinecone, create_vector_store, search_documents
+from src.exception import CustomException
+from src.logger import logger 
 
 def process_json_data(json_data):
     """
-    Process JSON data into Document objects for Pinecone.
-    
-    Args:
-        json_data (dict or list): JSON data to process
-        
     Returns:
         list: List of Document objects with page_content and metadata
     """
@@ -52,11 +47,6 @@ def process_json_data(json_data):
 
 def load_json_from_file(file_path):
     """
-    Load JSON data from a file.
-    
-    Args:
-        file_path (str): Path to the JSON file
-        
     Returns:
         dict or list: The JSON data
     """
@@ -71,12 +61,6 @@ def load_json_from_file(file_path):
 
 def upsert_json_data(json_data=None, json_file=None):
     """
-    Upsert JSON data to the vector database.
-    
-    Args:
-        json_data (dict or list, optional): JSON data to upsert directly
-        json_file (str, optional): Path to JSON file to load and upsert
-        
     Returns:
         PineconeVectorStore: The vector store
     """
@@ -108,12 +92,6 @@ def upsert_json_data(json_data=None, json_file=None):
 
 def search_similar_documents(query):
     """
-    Search for documents similar to the query.
-    
-    Args:
-        query (str): The search query
-        top_k (int): Number of results to return
-    
     Returns:
         list: Top k similar documents
     """
@@ -126,7 +104,7 @@ def search_similar_documents(query):
         raise CustomException(e, sys)
 
 def display_results(results):
-    """Display search results in a formatted way."""
+    """Display search results"""
     print(f"Found {len(results)} relevant documents:")
     for i, doc in enumerate(results):
         print(f"  {i+1}. {doc.page_content}")

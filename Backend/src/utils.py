@@ -1,36 +1,19 @@
 import os
 import sys
 import sqlite3
-from exception import CustomException
-from logger import logger
+from src.exception import CustomException
+from src.logger import logger
+import fitz
 
-DB_PATH = "D:\Projects\GenAI\Senor 2.0\Backend\data source\IndiaLaw.db" 
 
-def fetch_data():
-    conn = None  
-
-    try:
-        logger.info("Trying to access DB")
-        conn = sqlite3.connect(DB_PATH) 
-        cursor = conn.cursor()
-
-        query = "SELECT * FROM cpc LIMIT 3;"
-        cursor.execute(query)
-
-        rows = cursor.fetchall()
-        logger.info("Db read successful")
-
-        print("Data from cpc table:")
-        for row in rows:
-            logger.info("Db records printed")
-            print(row)
-
-    except sqlite3.Error as e:
-        logger.error(f"Error accessing database: {str(e)}")
-        raise CustomException(e, sys)
-
-    finally:
-        if conn: 
-            conn.close()
-
-fetch_data()
+def read_pdf_to_string(path,start = 0):
+    """
+    Returns:
+        str: The concatenated text content of all pages in the PDF document.
+    """
+    doc = fitz.open(path)
+    content = ""
+    for page_num in range(start,len(doc)):
+        page = doc[page_num]
+        content += page.get_text()
+    return content

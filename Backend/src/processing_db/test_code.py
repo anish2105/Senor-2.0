@@ -1,8 +1,8 @@
 import os
 import sys
-from vectordb_setup import initialize_pinecone, search_documents
-from exception import CustomException
-from logger import logger 
+from src.processing_db.vectordb_setup import initialize_pinecone, search_documents
+from src.exception import CustomException
+from src.logger import logger 
 
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 INDEX_NAME = "senor-rag"

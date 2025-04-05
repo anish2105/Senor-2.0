@@ -3,18 +3,19 @@ pandas
 numpy
 setuptools
 scikit-learn
-dill
 flask
 streamlit
 fastapi
-dotenv
 langchain_google_genai
 pydantic
-pinecone[grpc]
+pinecone-client[grpc]
 google-generativeai
 vertexai
 langchain-pinecone
 langchain
-fastapi 
 uvicorn 
+PyMuPDF
+langchain_experimental
+faiss-cpu
+langchain-community 
 -e .

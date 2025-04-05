@@ -3,9 +3,9 @@ import sys
 from dotenv import load_dotenv
 from pinecone import Pinecone, ServerlessSpec
 from langchain_pinecone import PineconeVectorStore
-from embeddings import embeddings
-from exception import CustomException
-from logger import logger
+from src.processing_db.gemini_embed import gemini_embeddings
+from src.exception import CustomException
+from src.logger import logger
 
 load_dotenv()
 
@@ -42,7 +42,7 @@ def create_vector_store(documents=None):
         
         vector_store = PineconeVectorStore(
             index=index,
-            embedding=embeddings,
+            embedding=gemini_embeddings,
             text_key="text"
         )
         
@@ -57,6 +57,8 @@ def create_vector_store(documents=None):
         logger.error(f"Error inserting documents inside Pinecone index: {str(e)}")
         raise CustomException(e, sys)
 
+
+# Rerank has been implemented, model = bge-reranker-v2-m3, retrieves 5 inital chunks and then re ranks the top 2
 def search_documents(query, initial_k=5, final_k=2):
     """
     Search for documents similar to the query with re-ranking using Pinecone's native reranker.

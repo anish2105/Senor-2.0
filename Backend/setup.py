@@ -32,10 +32,10 @@ def get_requirements()->List[str]:
 print(get_requirements())
 
 setup(
-    name="Senor 2.0",
+    name="Senor",
     version="0.0.1",
-    author="pooja harihar",
-    author_email="hariharpooja2007@gmail.com", # poja to add email
+    author="Anish Vantagodi",
+    author_email="anishvv0000@gmail.com",
     packages=find_packages(),
     install_requires=get_requirements()
 )
