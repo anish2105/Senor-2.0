@@ -14,14 +14,13 @@ import sys
 from dotenv import load_dotenv
 
 from langchain_experimental.text_splitter import SemanticChunker
-from src.utils import read_pdf_to_string
+from src.utils import search_similar_documents, display_results, read_pdf_to_string
 from src.logger import logger
 from src.exception import CustomException
 from src.processing_db.gemini_embed import gemini_embeddings
 from src.processing_db.vectordb_setup import (
     initialize_pinecone,
     create_vector_store,
-    search_documents,
 )
 
 load_dotenv()
@@ -68,23 +67,6 @@ def upsert_pdf_data(pdf_path: str):
     except Exception as e:
         logger.error(f"Failed to upsert PDF data: {str(e)}")
         raise CustomException(e, sys)
-
-def search_similar_documents(query: str):
-    """Search for documents similar to a query."""
-    try:
-        results = search_documents(query)
-        logger.info("Search completed successfully.")
-        return results
-    except Exception as e:
-        logger.error(f"Search failed: {str(e)}")
-        raise CustomException(e, sys)
-
-def display_results(results):
-    print(f"\n Found {len(results)} relevant documents:\n")
-    for i, doc in enumerate(results, 1):
-        print(f"{i}. {doc.page_content.strip()[:300]}...")
-        print(f"Metadata: {doc.metadata}\n")
-
 
 
 if __name__ == "__main__":

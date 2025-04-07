@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from src.processing_db.vectordb_setup import initialize_pinecone, search_documents
 from src.exception import CustomException
 from src.logger import logger
+from src.utils import *
 
 app = FastAPI(title="Pinecone RAG API", version="1.0")
 
@@ -17,7 +18,7 @@ except Exception as e:
     sys.exit(1)
 
 
-# Request Model
+# Request Model for retreiving user's query
 class SearchRequest(BaseModel):
     query: str
     top_k: int = 5
@@ -30,7 +31,7 @@ async def search_similar_documents(request: SearchRequest):
     """
     try:
         results = search_documents(request.query, initial_k=request.top_k)
-        logger.info(f"🔍 Retrieved {len(results)} documents for query: '{request.query}'")
+        logger.info(f"Retrieved {len(results)} documents for query: '{request.query}'")
 
         if not results:
             return {"message": "No relevant documents found"}
@@ -45,8 +46,11 @@ async def search_similar_documents(request: SearchRequest):
         ]
 
     except CustomException as e:
-        logger.error(f"Error during search: {str(e)}")
+        logger.error(f"For query :'{request.query}', Error during search : {str(e)}")
         raise HTTPException(status_code=500, detail="Error during document search")
+
+
+
 
 
 @app.get("/")
@@ -56,4 +60,3 @@ async def health_check():
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
-

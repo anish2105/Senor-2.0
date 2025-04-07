@@ -1,10 +1,10 @@
-import os
 import sys
 import json
 from langchain.schema import Document
 from src.processing_db.vectordb_setup import initialize_pinecone, create_vector_store, search_documents
 from src.exception import CustomException
 from src.logger import logger 
+from src.utils import search_similar_documents, display_results
 
 def process_json_data(json_data):
     """
@@ -90,25 +90,6 @@ def upsert_json_data(json_data=None, json_file=None):
         logger.error(f"Error upserting JSON data into Pinecone database: {str(e)}")
         raise CustomException(e, sys)
 
-def search_similar_documents(query):
-    """
-    Returns:
-        list: Top k similar documents
-    """
-    try:
-        results = search_documents(query)
-        logger.info(f"Response has been retrieved")
-        return results
-    except Exception as e:
-        logger.error(f"Error searching documents in Pinecone database: {str(e)}")
-        raise CustomException(e, sys)
-
-def display_results(results):
-    """Display search results"""
-    print(f"Found {len(results)} relevant documents:")
-    for i, doc in enumerate(results):
-        print(f"  {i+1}. {doc.page_content}")
-        print(f"     Metadata: {doc.metadata}")
 
 if __name__ == "__main__":
     try:
