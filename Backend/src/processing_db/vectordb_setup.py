@@ -11,7 +11,7 @@ load_dotenv()
 
 # Pinecone
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
-INDEX_NAME = "senor-rag"
+INDEX_NAME = "senor-2"
 
 def initialize_pinecone():
     """Initialize Pinecone client and create index if it doesn't exist."""
@@ -58,10 +58,12 @@ def create_vector_store(documents=None):
         raise CustomException(e, sys)
 
 
-# Rerank has been implemented, model = bge-reranker-v2-m3, retrieves 5 inital chunks and then re ranks the top 2
-def search_documents(query, initial_k=5, final_k=2):
+# Rerank has been implemented, model = bge-reranker-v2-m3, retrieves 6 inital chunks and then re ranks the top 3
+# Facing an error where re ranker doesnt work when token length of the retrieved documents is greater than 1024, hence a fallback mechanism has been implemented where if the error occurs than return first 3 retrieved documents
+def search_documents(query, initial_k=6, final_k=3):
     """
     Search for documents similar to the query with re-ranking using Pinecone's native reranker.
+    Fallback: If reranking fails (e.g., due to token limits), return top `final_k` from initial retrieval.
     """
     try:
         vector_store, pc = create_vector_store()
@@ -70,28 +72,33 @@ def search_documents(query, initial_k=5, final_k=2):
         initial_results = retriever.invoke(query)
         
         documents_for_reranking = [doc.page_content for doc in initial_results]
-        
-        rerank_results = pc.inference.rerank(
-            model="bge-reranker-v2-m3",
-            query=query,
-            documents=documents_for_reranking,
-            top_n=final_k,
-            return_documents=True,
-        )
 
-        reranked_documents = []
-        for reranked_item in rerank_results.data:
-            reranked_text = reranked_item['document']['text']
+        try:
+            rerank_results = pc.inference.rerank(
+                model="bge-reranker-v2-m3",
+                query=query,
+                documents=documents_for_reranking,
+                top_n=final_k,
+                return_documents=True,
+            )
 
-            # Find the matching document in initial results
-            for original_doc in initial_results:
-                if original_doc.page_content == reranked_text:
-                    reranked_documents.append(original_doc)
-                    break 
-        
-        logger.info(f"Retrieved {initial_k} documents and re-ranked to top {final_k}")
-        return reranked_documents
-        
+            reranked_documents = []
+            for reranked_item in rerank_results.data:
+                reranked_text = reranked_item['document']['text']
+
+                # Find the matching document in initial results
+                for original_doc in initial_results:
+                    if original_doc.page_content == reranked_text:
+                        reranked_documents.append(original_doc)
+                        break 
+
+            logger.info(f"Successfully re-ranked {final_k} out of {initial_k} documents.")
+            return reranked_documents
+
+        except Exception as rerank_error:
+            logger.warning(f"Reranker failed: {str(rerank_error)}. Falling back to initial retrieval.")
+            return initial_results[:final_k]  # fallback: first N from initial results
+
     except Exception as e:
         logger.error(f"Error retrieving and re-ranking documents: {str(e)}")
         raise CustomException(e, sys)

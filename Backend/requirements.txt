@@ -17,5 +17,6 @@ uvicorn
 PyMuPDF
 langchain_experimental
 faiss-cpu
+tiktoken
 langchain-community 
 -e .

@@ -12,7 +12,7 @@ Breakpoints used:
 import os
 import sys
 from dotenv import load_dotenv
-
+from langchain.schema import Document
 from langchain_experimental.text_splitter import SemanticChunker
 from src.utils import search_similar_documents, display_results, read_pdf_to_string
 from src.logger import logger
@@ -22,51 +22,66 @@ from src.processing_db.vectordb_setup import (
     initialize_pinecone,
     create_vector_store,
 )
+from langchain.text_splitter import TokenTextSplitter
+from src.utils import get_token_count
 
+MAX_TOKENS = 900
 load_dotenv()
 
-def process_pdf_to_documents(pdf_path: str):
-    """
-    Returns:
-        list: LangChain Document objects.
-    """
-    try:
-        # Start extracting the content of PDF from 3rd page, default is set to 0 
-        content = read_pdf_to_string(pdf_path,3)
-        if not content.strip():
-            raise ValueError(f"No content extracted from PDF: {pdf_path}")
+def split_longer_chunks(documents, max_tokens=MAX_TOKENS):
+    """Splits documents if they exceed max_tokens."""
+    token_splitter = TokenTextSplitter(chunk_size=max_tokens, chunk_overlap=50)
 
-        chunker = SemanticChunker(
-            gemini_embeddings,
-            breakpoint_threshold_type='percentile',
-            breakpoint_threshold_amount=90,
+    final_docs = []
+    for doc in documents:
+        text = doc.page_content
+        token_count = get_token_count(text)
+
+        if token_count <= max_tokens:
+            final_docs.append(doc)
+        else:
+            smaller_chunks = token_splitter.create_documents([text])
+            final_docs.extend(smaller_chunks)
+
+    return final_docs
+
+def process_pdf(pdf_path: str):
+    content = read_pdf_to_string(pdf_path, 3)
+    if not content.strip():
+        raise ValueError(f"No content extracted from PDF: {pdf_path}")
+
+    chunker = SemanticChunker(
+        gemini_embeddings,
+        breakpoint_threshold_type='percentile',
+        breakpoint_threshold_amount=90,
+    )
+    semantic_chunks = chunker.create_documents([content])
+    print(f"Created {len(semantic_chunks)} semantic chunks from PDF.")
+    final_documents = split_longer_chunks(semantic_chunks)
+    print(f"After token splitting, total chunks: {len(final_documents)}")
+
+    document_objects = [
+        Document(
+            page_content=chunk.page_content,
+            metadata={"source": "consumer_act_pdf"}  
         )
+        for chunk in final_documents
+    ]
 
-        documents = chunker.create_documents([content])
-        logger.info(f"Created {len(documents)} semantic chunks from PDF.")
-        return documents
-
-    except Exception as e:
-        logger.error(f"Error processing PDF {pdf_path}: {str(e)}")
-        raise CustomException(e, sys)
+    return document_objects
 
 def upsert_pdf_data(pdf_path: str):
     """ 
     Returns:
         PineconeVectorStore: The vector store instance.
     """
-    try:
-        documents = process_pdf_to_documents(pdf_path)
+    documents = process_pdf(pdf_path)
 
-        initialize_pinecone()
-        vector_store = create_vector_store(documents)
+    initialize_pinecone()
+    vector_store = create_vector_store(documents)
 
-        logger.info(f"Upserted {len(documents)} PDF chunks into Pinecone.")
-        return vector_store
-
-    except Exception as e:
-        logger.error(f"Failed to upsert PDF data: {str(e)}")
-        raise CustomException(e, sys)
+    print(f"Upserted {len(documents)} PDF chunks into Pinecone.")
+    return vector_store
 
 
 if __name__ == "__main__":

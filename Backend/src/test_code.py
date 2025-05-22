@@ -3,7 +3,7 @@ from exception import CustomException
 
 if __name__ == "__main__":
     try:
-        query = "what happens to sellers when the product is defective"
+        query = "evidence and facts in court"
         results = test_code.search_similar_documents(query)
         test_code.display_results(results)
         

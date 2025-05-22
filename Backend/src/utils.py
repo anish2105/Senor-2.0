@@ -5,6 +5,7 @@ from src.exception import CustomException
 from src.logger import logger
 import fitz
 from src.processing_db.vectordb_setup import search_documents
+import tiktoken
 
 def search_similar_documents(query):
     """
@@ -25,6 +26,7 @@ def display_results(results):
     for i, doc in enumerate(results):
         print(f"  {i+1}. {doc.page_content}")
         print(f"     Metadata: {doc.metadata}")
+        print("\n" + "-"*50 + "\n")
 
 def read_pdf_to_string(path,start = 0):
     """
@@ -37,3 +39,10 @@ def read_pdf_to_string(path,start = 0):
         page = doc[page_num]
         content += page.get_text()
     return content
+
+def get_token_count(text: str) -> int:
+    try:
+        enc = tiktoken.get_encoding("cl100k_base")
+        return len(enc.encode(text))
+    except Exception:
+        return len(text.split())

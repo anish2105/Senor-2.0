@@ -7,6 +7,8 @@ from src.processing_db.vectordb_setup import initialize_pinecone, search_documen
 from src.exception import CustomException
 from src.logger import logger
 from src.utils import *
+from LLM_setup.LLM_call import generate_chatbot_response, parse_gemini_response
+from src.chat_history_manager import chat_history_manager
 
 app = FastAPI(title="Pinecone RAG API", version="1.0")
 
@@ -21,7 +23,7 @@ except Exception as e:
 # Request Model for retreiving user's query
 class SearchRequest(BaseModel):
     query: str
-    top_k: int = 5
+    top_k: int = 6
 
 
 @app.post("/search")
@@ -50,7 +52,29 @@ async def search_similar_documents(request: SearchRequest):
         raise HTTPException(status_code=500, detail="Error during document search")
 
 
+# Chatbot endpoint
+class ChatRequest(BaseModel):
+    query: str
 
+@app.post("/chat")
+async def chat_with_legal_bot(request: ChatRequest):
+    """
+    Accepts a legal query, runs LLM, and returns parsed answer + inner monologue.
+    """
+    try:
+        response = generate_chatbot_response(request.query)
+        parsed = parse_gemini_response(response)
+
+        # Return tokens, metadata
+        return {
+            "query": request.query,
+            "inner_monologue": parsed["inner_monologue"],
+            "answer": parsed["answer"]
+        }
+
+    except CustomException as e:
+        logger.error(f"Error while generating response for query: {request.query} | {str(e)}")
+        raise HTTPException(status_code=500, detail="Error during chatbot response generation")
 
 
 @app.get("/")
