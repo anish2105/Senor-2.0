@@ -19,4 +19,6 @@ langchain_experimental
 faiss-cpu
 tiktoken
 langchain-community 
+agno
+duckduckgo-search
 -e .

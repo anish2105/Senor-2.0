@@ -1,20 +1,33 @@
-from src.LLM_setup.LLM_initialization import LegalChatbot
+from src.LLM_setup.llm_initialization import LegalChatbot
 from src.prompts.main_prompt import basic_prompt
 from src.exception import CustomException
-from src.utils import search_similar_documents, display_results
+from src.utils import search_similar_documents
 from src.logger import logger
 from langchain_core.messages import AIMessage
 from src.chat_history_manager import chat_history_manager
 from src.prompts.summarization import summarize
 import re
-
-# chat_history = []
-
-# def update_chat_history(user_query, system_response):
-#     chat_history.append({"user": user_query, "system": system_response})
+import sys
+from ai_agent_call import get_enhanced_legal_answer
 
 def get_chunk_text(results):
     return "\n".join([doc.page_content for doc in results])
+
+def extract_token_usage(response: AIMessage) -> dict:
+    """
+    Extracts input, output, and total token 
+    """
+    try:
+        usage = response.usage_metadata if hasattr(response, 'usage_metadata') else {}
+        return {
+            "input_tokens": usage.get("input_tokens", 0),
+            "output_tokens": usage.get("output_tokens", 0),
+            "total_tokens": usage.get("total_tokens", 0)
+        }
+    except Exception as e:
+        logger.error(f"Error extracting token usage: {str(e)}")
+        raise CustomException(e, sys)
+
 
 def parse_gemini_response(response: AIMessage) -> dict:
     """
@@ -41,7 +54,7 @@ def generate_chatbot_response(user_query: str) -> AIMessage:
 
         chat_history = chat_history_manager.get()
 
-        if len(chat_history) >= 2:
+        if len(chat_history) >= 4:
             first_two = chat_history[:2]
 
             summary_system_prompt, summary_user_prompt = summarize(first_two)
@@ -69,7 +82,7 @@ def generate_chatbot_response(user_query: str) -> AIMessage:
 
         chat_history_manager.add(user_query, response.content if isinstance(response, AIMessage) else str(response))
         logger.info("Chatbot response generated successfully.")
-        return response
+        return relevant_chunks, response
 
     except CustomException as e:
         logger.error(f"Error during chatbot response generation: {str(e)}")
@@ -80,13 +93,35 @@ if __name__ == "__main__":
     print("\n🧑‍⚖️ Legal Chatbot (type 'exit' to quit)\n")
     while True:
         try:
-            
+            print("\nEnter your query...\n")
             query = input("\nYou: ")
             print("Processing .....")
             if query.lower() in ["exit", "quit"]:
                 break
-            response = generate_chatbot_response(query)
+            relevant_chunks, response = generate_chatbot_response(query)
+            # print(response)
             parsed = parse_gemini_response(response)
-            print("\n🤖 Assistant:", parsed["answer"])
+            token_info = extract_token_usage(response)
+            if "<additional>" in parsed["answer"].lower() :
+                print("\n Primary LLM could not provide an answer. Trying enhanced AI agent...\n")
+                logger.info("Entering Agents call...")
+                fallback_answer = get_enhanced_legal_answer(query)
+                print("\n🤖 Enhanced Assistant:", fallback_answer)
+            else:
+                print("\n🤖 Assistant:", parsed["answer"])
+                print("\n************************************************\n")
+                print("Input tokens:", token_info["input_tokens"])
+                print("Output tokens:", token_info["output_tokens"])
+                print("Total tokens:", token_info["total_tokens"])
+                print("\n************************************************\n")
+                user_followup = input("\n💡 Do you want to enhance this answer? (y/n): ").strip().lower()
+                if user_followup == "y":
+                    # You can pass chat history if desired
+                    history_str = "\n".join(
+                        [f"User: {msg['user']}\nAssistant: {msg['system']}" for msg in chat_history_manager.get()]
+                    )
+                    # print(history_str)
+                    enhanced_response = get_enhanced_legal_answer(query, chat_history=history_str)
+                    print("\n🤖 Enhanced Assistant:", enhanced_response)
         except CustomException as e:
             print("Error:", str(e))

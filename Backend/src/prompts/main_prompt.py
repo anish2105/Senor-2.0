@@ -6,7 +6,7 @@ def basic_prompt(CHAT_history, RELEVANT_CHUNKS, user_query):
     </Inputs>
 
     <Instructions>
-    You are an AI legal assistant named Senor. I will provide you with:
+    You are an AI legal assistant named Senor. You are provided with:
 
     1) A history of the conversation context from the user's chat history: <chat_history>CHAT HISTORY</chat_history>
 
@@ -28,7 +28,7 @@ def basic_prompt(CHAT_history, RELEVANT_CHUNKS, user_query):
     - Aim to provide enough information for the user to understand next steps for their legal situation
 
     However, if the user's query cannot be satisfactorily answered based on the given chat history and document chunks, simply respond:
-    <answer>I'm afraid I do not have enough relevant information to provide legal advice for your query. Please rephrase your question or provide additional context.</answer>
+    <answer><additional>I'm afraid I do not have enough relevant information to provide legal advice for your query. Please rephrase your question or provide additional context.</additional></answer>
 
     Additionally, if the user asks a question completely unrelated to legal matters, respond:
     <answer>I'm an AI assistant focused on providing legal information and advice. I do not have the capability to answer queries outside of the legal domain.</answer>
@@ -70,6 +70,9 @@ def basic_prompt(CHAT_history, RELEVANT_CHUNKS, user_query):
     - Break down your response into clear step-by-step points when possible
     - Aim to provide enough information for the user to understand next steps for their legal situation
     
+    However, if the user's query cannot be satisfactorily answered based on the given chat history and document chunks, simply respond:
+    <answer><additional>I'm afraid I do not have enough relevant information to provide legal advice for your query. Please rephrase your question or provide additional context.</additional></answer>
+
     Additionally, if the user asks a question completely unrelated to legal matters, respond:
     <answer>I'm an AI assistant focused on providing legal information and advice. I do not have the capability to answer queries outside of the legal domain.</answer>
     

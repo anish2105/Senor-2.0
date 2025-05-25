@@ -7,8 +7,7 @@ from src.processing_db.vectordb_setup import initialize_pinecone, search_documen
 from src.exception import CustomException
 from src.logger import logger
 from src.utils import *
-from LLM_setup.LLM_call import generate_chatbot_response, parse_gemini_response
-from src.chat_history_manager import chat_history_manager
+from LLM_setup.llm_call import generate_chatbot_response, parse_gemini_response, extract_token_usage
 
 app = FastAPI(title="Pinecone RAG API", version="1.0")
 
@@ -62,14 +61,18 @@ async def chat_with_legal_bot(request: ChatRequest):
     Accepts a legal query, runs LLM, and returns parsed answer + inner monologue.
     """
     try:
-        response = generate_chatbot_response(request.query)
+        relevant_chunks, response = generate_chatbot_response(request.query)
         parsed = parse_gemini_response(response)
-
-        # Return tokens, metadata
+        token_info = extract_token_usage(response)
+        # Return metadata
         return {
             "query": request.query,
             "inner_monologue": parsed["inner_monologue"],
-            "answer": parsed["answer"]
+            "answer": parsed["answer"],
+            "Input tokens:": token_info["input_tokens"],
+            "Output tokens:": token_info["output_tokens"],
+            "Total tokens:": token_info["total_tokens"],
+            "Relevant chunks" : relevant_chunks
         }
 
     except CustomException as e:
