@@ -1,7 +1,7 @@
 from agno.agent import Agent
 from agno.models.google import Gemini
 import os
-
+from agno.tools.duckduckgo import DuckDuckGoTools
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -27,6 +27,8 @@ Keep your answer limited to no more than 3 paragraphs in total length.
 # Create agent
 agent = Agent(
     model= Gemini(id="gemini-2.0-flash",api_key = api_key),
+    tools=[DuckDuckGoTools()], 
+    show_tool_calls=True,
     description= description,
     instructions= [instructions],
     markdown= True
