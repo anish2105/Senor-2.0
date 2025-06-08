@@ -21,4 +21,5 @@ tiktoken
 langchain-community 
 agno
 duckduckgo-search
+ragas
 -e .

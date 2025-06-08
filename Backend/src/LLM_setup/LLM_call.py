@@ -9,6 +9,7 @@ from src.prompts.summarization import summarize
 import re
 import sys
 from ai_agent_call import get_enhanced_legal_answer
+from src.eval.llm_evaluation import run_llm_evaluation
 
 def get_chunk_text(results):
     return "\n".join([doc.page_content for doc in results])
@@ -46,7 +47,7 @@ def parse_gemini_response(response: AIMessage) -> dict:
         logger.error(f"Error during parsing chatbot response's: {str(e)}")
         raise e
 
-
+    
 def generate_chatbot_response(user_query: str) -> AIMessage:
     try:
         results = search_similar_documents(user_query)
@@ -82,6 +83,7 @@ def generate_chatbot_response(user_query: str) -> AIMessage:
 
         chat_history_manager.add(user_query, response.content if isinstance(response, AIMessage) else str(response))
         logger.info("Chatbot response generated successfully.")
+        
         return relevant_chunks, response
 
     except CustomException as e:
@@ -102,11 +104,14 @@ if __name__ == "__main__":
             # print(response)
             parsed = parse_gemini_response(response)
             token_info = extract_token_usage(response)
+            
+                    
             if "<additional>" in parsed["answer"].lower() :
                 print("\n Primary LLM could not provide an answer. Trying enhanced AI agent...\n")
                 logger.info("Entering Agents call...")
                 fallback_answer = get_enhanced_legal_answer(query)
                 print("\n🤖 Enhanced Assistant:", fallback_answer)
+                print("\n************************************************\n")
             else:
                 print("\n🤖 Assistant:", parsed["answer"])
                 print("\n************************************************\n")
@@ -114,6 +119,13 @@ if __name__ == "__main__":
                 print("Output tokens:", token_info["output_tokens"])
                 print("Total tokens:", token_info["total_tokens"])
                 print("\n************************************************\n")
+                eval_scores = run_llm_evaluation(query, relevant_chunks, parsed["answer"])
+                if eval_scores:
+                    print("\n📊 LLM Response Evaluation:")
+                    for metric, score in eval_scores.items():
+                        print(f"{metric}: {score:.4f}")
+                print("\n************************************************\n")
+                
                 user_followup = input("\n💡 Do you want to enhance this answer? (y/n): ").strip().lower()
                 if user_followup == "y":
                     # You can pass chat history if desired
