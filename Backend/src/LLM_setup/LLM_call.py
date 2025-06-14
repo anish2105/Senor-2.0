@@ -8,7 +8,7 @@ from src.chat_history_manager import chat_history_manager
 from src.prompts.summarization import summarize
 import re
 import sys
-from ai_agent_call import get_enhanced_legal_answer
+from src.LLM_setup.ai_agent_call import get_enhanced_legal_answer
 from src.eval.llm_evaluation import run_llm_evaluation
 
 def get_chunk_text(results):
@@ -46,6 +46,19 @@ def parse_gemini_response(response: AIMessage) -> dict:
     except CustomException as e:
         logger.error(f"Error during parsing chatbot response's: {str(e)}")
         raise e
+
+def evaluate_llm_output(query: str, context: str, llm_answer: str) -> dict:
+    """
+    Evaluate the LLM answer using available metrics and log the evaluation.
+    """
+    try:
+        logger.info(f"Running evaluation for query: {query}")
+        scores = run_llm_evaluation(query, context, llm_answer)
+        logger.info(f"Evaluation scores for query '{query}': {scores}")
+        return scores
+    except Exception as e:
+        logger.error(f"Evaluation failed for query '{query}': {str(e)}")
+        raise CustomException(e, sys)
 
     
 def generate_chatbot_response(user_query: str) -> AIMessage:

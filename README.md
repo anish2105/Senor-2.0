@@ -13,7 +13,7 @@
 * Re-ranks retrieved chunks using **Pinecone's `bge-reranker-v2-m3`**.
 * Runs LLM calls using **Gemini-2.0-flash** for answering user queries.
 * Integrates an AI agent via **Agno** to fetch up-to-date responses using DuckDuckGo.
-* Evaluates and monitors chatbot performance using **Opik**.
+* Evaluate chatbot performance using **Ragas**.
 * Provides RESTful API access using **FastAPI**.
 
 ---
@@ -40,9 +40,9 @@
 * Adds real-time search capability using DuckDuckGo.
 * Option to refine or replace RAG answers with updated information.
 
-### 📊 Opik
+### 📊 Ragas
 
-* Enables LLM response evaluation and monitoring.
+* Enables LLM response evaluation.
 * Tracks performance metrics and answer quality.
 
 ---
@@ -55,7 +55,7 @@
 * **Docker**
 * **Pinecone**
 * **Gemini**
-* **Opik**
+* **Ragas**
 * **Agno**
 
 ---
@@ -68,6 +68,5 @@ Before you begin, ensure you have the following:
 * Python 3.10+
 * Pinecone API Key
 * Gemini API Key
-* Opik API Key
 
 ---

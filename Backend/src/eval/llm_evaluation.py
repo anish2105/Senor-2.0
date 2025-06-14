@@ -93,7 +93,7 @@ def run_llm_evaluation( user_prompt, context_text, llm_answer):
             formatted = {
                 "Faithfulness": round(results_dict.get("faithfulness", 0.0), 4),
                 "Response Relevancy": round(results_dict.get("response_relevancy", 0.0), 4),
-                "CVontext_precision": round(results_dict.get("llm_context_precision_without_reference", 0.0), 4)
+                "Context_precision": round(results_dict.get("llm_context_precision_without_reference", 0.0), 4)
             }
             logger.info(f"LLM evaluation scores: {formatted}")
             return formatted
